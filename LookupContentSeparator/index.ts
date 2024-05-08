@@ -2,6 +2,48 @@ import { IInputs, IOutputs } from "./generated/ManifestTypes";
 
 export class LookupContentSeparator implements ComponentFramework.StandardControl<IInputs, IOutputs> {
 
+    //#region Vars
+    //Context Logic
+    private container: HTMLDivElement;
+    private context: ComponentFramework.Context<IInputs>;
+    private notifyOutPutChanged: () => void;//to notify form of control change...    
+    private state: ComponentFramework.Dictionary;
+    
+    //Global Vars 
+    //container
+    private subcontainer : HTMLDivElement;
+
+    //label
+    private label: HTMLLabelElement;
+    private lbl_message: string;
+    private showLabel: boolean;
+    private labeltext: string;
+
+    //input    
+    private input: HTMLInputElement;
+    private inpt_message: string;
+    private showLeft: boolean;
+
+    //Manifest
+    private contentSeparatorValue: string; 
+    private separator: string;
+    private editMode: boolean;
+
+
+    private inputChange = (event: Event) => {
+        let updatedvalue = (event.target as HTMLInputElement).value;
+        let originalcontent = this.contentSeparatorValue.split(this.separator); 
+        this.contentSeparatorValue = 
+        this.showLeft ? 
+        updatedvalue + " " + this.separator + " " + originalcontent[1].trim() : // Original Left (separator) New Value
+        originalcontent[0].trim() + " " + this.separator + " " + updatedvalue;  // New Value (separator) Original Left
+        this.notifyOutPutChanged();
+    }
+    //#endregion
+
+    //#region Empty Constructor
+
+
     /**
      * Empty constructor.
      */
@@ -9,6 +51,8 @@ export class LookupContentSeparator implements ComponentFramework.StandardContro
     {
 
     }
+
+    //#endregion
 
     /**
      * Used to initialize the control instance. Controls can kick off remote server calls and other initialization actions here.
@@ -20,9 +64,87 @@ export class LookupContentSeparator implements ComponentFramework.StandardContro
      */
     public init(context: ComponentFramework.Context<IInputs>, notifyOutputChanged: () => void, state: ComponentFramework.Dictionary, container:HTMLDivElement): void
     {
-        // Add control initialization code
+                //#region - control initialization code 
+                this.context = context;
+                this.notifyOutPutChanged = notifyOutputChanged;
+                this.state = state;
+                this.container = container;
+                //#endregion 
+                this.loadData();
+                this.loadForm();
     }
-
+    /*
+     * Used on load event to get the manifest data values. 
+     */
+    private loadData(): void {
+        this.showLeft = this.context.parameters.LeftContent.raw;
+        this.editMode = this.context.parameters.EditMode.raw; 
+        this.separator = this.context.parameters.Separator.raw || ","; 
+        this.contentSeparatorValue = this.context.parameters.LookupContentSeparatorValue.raw || "";   
+        this.labeltext = this.context.parameters.LabelValue.raw || "";  
+        this.showLabel = this.context.parameters.LabelDisplay.raw || false;       
+    }
+    /*
+     * Used on load event to get the html control value and set the input html to the string. 
+     */
+    private loadForm(): void {
+        this.createContainer();
+        this.createLabel();
+        this.createInput();
+        this.setFormLoadValue();
+        //todo
+        //load fluent UI component - use constructor no.
+        //redener control results - make sub class
+        //create web api call - make helper class
+    }
+    /*
+     * Used on load event to get the html control value and set the input html to the string. 
+     */
+    private createContainer(): void {
+        this.subcontainer = this.getElement("div", "mycontainer", "mycontainer") as HTMLDivElement;
+        this.container.appendChild(this.subcontainer);
+    }
+    /*
+     * Used on load event to create the input control and append it to the Container. 
+     */
+    private createLabel(): void {
+        try {
+            this.label = this.getElement("label", "label", "mylabel") as HTMLLabelElement;
+            let message = this.showLeft ? this.labeltext.split(this.separator)[0] : this.labeltext.split(this.separator)[1];
+            this.label.innerText = "(" + message.trim() + ")";
+            if(this.showLabel === true)
+                this.container.appendChild(this.label);
+        } catch (error){
+            alert(error);
+        }
+    }
+    /*
+     * Used on load event to create the input control and append it to the Container. 
+     */
+    private createInput(): void {
+        this.input = this.getElement("input", "Input", "myinput") as HTMLInputElement;
+        this.input.disabled = !this.editMode;
+        this.input.addEventListener("keyup", this.inputChange);
+        this.container.appendChild(this.input);
+    }
+    private getElement(type: string, id: string, className: string): HTMLElement {
+        let obj = document.createElement(type);
+        obj.id = id;
+        obj.className = className;
+        return obj;
+    }
+    /**
+     * Sets the Control value to the input for the Content Separator.     
+     */
+    private setFormLoadValue(): void {        
+        try {
+            let content = this.contentSeparatorValue.split(this.separator);   
+            if (content.length < 2) return;     
+            this.input.value = this.showLeft ? content[0].trim() : content[1].trim();
+        } catch (error) {
+            alert("Please contact support, the following error occurred: ERROR:" + error);
+        }
+    }
 
     /**
      * Called when any value in the property bag has changed. This includes field values, data-sets, global values such as container height and width, offline status, control metadata values such as label, visible, etc.
@@ -39,7 +161,9 @@ export class LookupContentSeparator implements ComponentFramework.StandardContro
      */
     public getOutputs(): IOutputs
     {
-        return {};
+         return {
+            LookupContentSeparatorValue : this.contentSeparatorValue
+        };
     }
 
     /**
