@@ -1,4 +1,6 @@
 import { IInputs, IOutputs } from "./generated/ManifestTypes";
+import * as $ from 'jquery';
+import 'jquery-ui/ui/widgets/autocomplete';
 
 export class LookupContentSeparator implements ComponentFramework.StandardControl<IInputs, IOutputs> {
 
@@ -91,6 +93,7 @@ export class LookupContentSeparator implements ComponentFramework.StandardContro
         this.createContainer();
         this.createLabel();
         this.createInput();
+        this.setAutoComplete();
         this.setFormLoadValue();
         //todo
         //load fluent UI component - use constructor no.
@@ -124,8 +127,23 @@ export class LookupContentSeparator implements ComponentFramework.StandardContro
     private createInput(): void {
         this.input = this.getElement("input", "Input", "myinput") as HTMLInputElement;
         this.input.disabled = !this.editMode;
-        this.input.addEventListener("keyup", this.inputChange);
+        //this.input.addEventListener("keyup", this.inputChange);    
+            
         this.container.appendChild(this.input);
+    }
+    private setAutoComplete(): void {
+        $(this.input).autocomplete({
+            source: function(request: {term: string}, response: (results: string[]) => void) {
+                alert('You enetered: ' + request.term);
+                let data = [request.term]; // Replace with your data 
+                response($.ui.autocomplete.filter(data, request.term));
+            },
+            select: function(event, ui) {
+                alert('Here!');
+                console.log("You selected: " + ui.item.value);
+            }
+        });
+
     }
     private getElement(type: string, id: string, className: string): HTMLElement {
         let obj = document.createElement(type);
