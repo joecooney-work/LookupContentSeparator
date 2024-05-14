@@ -1,6 +1,7 @@
 import { IInputs, IOutputs } from "./generated/ManifestTypes";
 import * as $ from 'jquery';
 import 'jquery-ui/ui/widgets/autocomplete';
+import { ApiHelper } from './caller';
 
 export class LookupContentSeparator implements ComponentFramework.StandardControl<IInputs, IOutputs> {
 
@@ -14,6 +15,10 @@ export class LookupContentSeparator implements ComponentFramework.StandardContro
     //Global Vars 
     //container
     private subcontainer : HTMLDivElement;
+    private apiHelper: ApiHelper;
+    //field
+    private entity: string;
+    private fieldname: string;
 
     //label
     private label: HTMLLabelElement;
@@ -30,15 +35,17 @@ export class LookupContentSeparator implements ComponentFramework.StandardContro
     private contentSeparatorValue: string; 
     private separator: string;
     private editMode: boolean;
+    private searchlength: number;
+    private resultslength: number;
 
-
+    //deprecated a/o - 5/8 replaced with Autocomplete.
     private inputChange = (event: Event) => {
         let updatedvalue = (event.target as HTMLInputElement).value;
         let originalcontent = this.contentSeparatorValue.split(this.separator); 
         this.contentSeparatorValue = 
         this.showLeft ? 
         updatedvalue + " " + this.separator + " " + originalcontent[1].trim() : // Original Left (separator) New Value
-        originalcontent[0].trim() + " " + this.separator + " " + updatedvalue;  // New Value (separator) Original Left
+        originalcontent[0].trim() + " " + this.separator + " " + updatedvalue;  // New Value (separator) Original Right
         this.notifyOutPutChanged();
     }
     //#endregion
@@ -51,7 +58,8 @@ export class LookupContentSeparator implements ComponentFramework.StandardContro
      */
     constructor()
     {
-
+        //todo - get url from js and drop here:
+        this.apiHelper = new ApiHelper('https://test123.crm.dynamics.com');        
     }
 
     //#endregion
@@ -127,14 +135,18 @@ export class LookupContentSeparator implements ComponentFramework.StandardContro
     private createInput(): void {
         this.input = this.getElement("input", "Input", "myinput") as HTMLInputElement;
         this.input.disabled = !this.editMode;
-        //this.input.addEventListener("keyup", this.inputChange);    
-            
+        //this.input.addEventListener("keyup", this.inputChange);                
         this.container.appendChild(this.input);
     }
     private setAutoComplete(): void {
+        let _searchlength = this.searchlength;
+        let response = this.apiHelper.getLookupValues(this.entity, this.fieldname);
         $(this.input).autocomplete({
             source: function(request: {term: string}, response: (results: string[]) => void) {
-                alert('You enetered: ' + request.term);
+                if (request.term.length < _searchlength) return;
+                //alert('You enetered: ' + request.term);
+                
+
                 let data = [request.term]; // Replace with your data 
                 response($.ui.autocomplete.filter(data, request.term));
             },
