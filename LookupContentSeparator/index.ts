@@ -105,7 +105,7 @@ export class LookupContentSeparator implements ComponentFramework.StandardContro
     private createLabel(): void {
         try {
             this.label = this.getElement("label", "label", "mylabel") as HTMLLabelElement;
-            let message = this.showLeft ? this.labeltext.split(this.separator)[0] : this.labeltext.split(this.separator)[1];
+            const message = this.showLeft ? this.labeltext.split(this.separator)[0] : this.labeltext.split(this.separator)[1];
             this.label.innerText = "(" + message.trim() + ")";
             if (this.showLabel) {
                 this.container.appendChild(this.label);
@@ -121,13 +121,13 @@ export class LookupContentSeparator implements ComponentFramework.StandardContro
         this.container.appendChild(this.input);
     }
 
-    private setAutoComplete(): void {
-        let _searchlength = this.searchlength;
+     private setAutoComplete(): void {
+        const _searchlength = this.searchlength;
         $(this.input).autocomplete({
             source: (request: { term: string }, response: (results: string[]) => void) => {
                 if (request.term.length < _searchlength) return;
                 this.apiHelper.fetchRecords(request.term).then(data => {
-                    let parsedRecords = this.parseRecords(data);
+                    const parsedRecords = this.parseRecords(data);
                     this.records = parsedRecords; // Store records
                     this.updateAutocomplete(parsedRecords, request.term, response);
                 });
@@ -138,7 +138,7 @@ export class LookupContentSeparator implements ComponentFramework.StandardContro
                 }
             }
         } as JQueryUI.AutocompleteOptions);
-    }
+     }
 
     // Parse records
     private parseRecords(records: { name: string }[]): { left: string, right: string }[] {
@@ -167,7 +167,7 @@ export class LookupContentSeparator implements ComponentFramework.StandardContro
     }
 
     private getElement(type: string, id: string, className: string): HTMLElement {
-        let obj = document.createElement(type);
+        const obj = document.createElement(type);
         obj.id = id;
         obj.className = className;
         return obj;
@@ -176,7 +176,7 @@ export class LookupContentSeparator implements ComponentFramework.StandardContro
     // Set the control value to the input for the content separator
     private setFormLoadValue(): void {
         try {
-            let content = this.contentSeparatorValue.split(this.separator);
+            const content = this.contentSeparatorValue.split(this.separator);
             if (content.length < 2) return;
             this.input.value = this.showLeft ? content[0].trim() : content[1].trim();
         } catch (error) {

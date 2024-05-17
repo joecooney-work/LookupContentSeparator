@@ -1,8 +1,8 @@
 {
     "extends": "./node_modules/pcf-scripts/tsconfig_base.json",
     "compilerOptions": {
-        "typeRoots": ["node_modules/@types"],
-        "types": ["jquery", "jqueryui"],
+        "typeRoots":  ["node_modules/@types", "node_modules/pcf-scripts/types", "typings"],
+        "types": ["jquery", "jqueryui", "powerapps-component-framework"],
         "forceConsistentCasingInFileNames": true // Add this line
     },
     "include": [
