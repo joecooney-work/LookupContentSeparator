@@ -6,62 +6,50 @@ import { ApiHelper } from './caller';
 export class LookupContentSeparator implements ComponentFramework.StandardControl<IInputs, IOutputs> {
 
     //#region Vars
-    //Context Logic
+    // Context Logic
     private container: HTMLDivElement;
     private context: ComponentFramework.Context<IInputs>;
-    private notifyOutPutChanged: () => void;//to notify form of control change...    
+    private notifyOutPutChanged: () => void; // to notify form of control change...
     private state: ComponentFramework.Dictionary;
-    
-    //Global Vars 
-    //container
-    private subcontainer : HTMLDivElement;
+
+    // Global Vars
+    private subcontainer: HTMLDivElement;
     private apiHelper: ApiHelper;
-    //field
+
+    // Field
     private entity: string;
     private fieldname: string;
 
-    //label
+    // Label
     private label: HTMLLabelElement;
     private lbl_message: string;
     private showLabel: boolean;
     private labeltext: string;
 
-    //input    
+    // Input
     private input: HTMLInputElement;
     private inpt_message: string;
     private showLeft: boolean;
 
-    //Manifest
-    private contentSeparatorValue: string; 
+    // Manifest
+    private contentSeparatorValue: string;
     private separator: string;
     private editMode: boolean;
     private searchlength: number;
     private resultslength: number;
 
-    //deprecated a/o - 5/8 replaced with Autocomplete.
-    private inputChange = (event: Event) => {
-        let updatedvalue = (event.target as HTMLInputElement).value;
-        let originalcontent = this.contentSeparatorValue.split(this.separator); 
-        this.contentSeparatorValue = 
-        this.showLeft ? 
-        updatedvalue + " " + this.separator + " " + originalcontent[1].trim() : // Original Left (separator) New Value
-        originalcontent[0].trim() + " " + this.separator + " " + updatedvalue;  // New Value (separator) Original Right
-        this.notifyOutPutChanged();
-    }
+    // Records
+    private records: { left: string, right: string }[];
+
     //#endregion
 
     //#region Empty Constructor
-
-
     /**
      * Empty constructor.
      */
-    constructor()
-    {
-        //todo - get url from js and drop here:
-        this.apiHelper = new ApiHelper('https://test123.crm.dynamics.com');        
+    constructor() {
+        this.records = [];
     }
-
     //#endregion
 
     /**
@@ -72,104 +60,124 @@ export class LookupContentSeparator implements ComponentFramework.StandardContro
      * @param state A piece of data that persists in one session for a single user. Can be set at any point in a controls life cycle by calling 'setControlState' in the Mode interface.
      * @param container If a control is marked control-type='standard', it will receive an empty div element within which it can render its content.
      */
-    public init(context: ComponentFramework.Context<IInputs>, notifyOutputChanged: () => void, state: ComponentFramework.Dictionary, container:HTMLDivElement): void
-    {
-                //#region - control initialization code 
-                this.context = context;
-                this.notifyOutPutChanged = notifyOutputChanged;
-                this.state = state;
-                this.container = container;
-                //#endregion 
-                this.loadData();
-                this.loadForm();
+    public init(context: ComponentFramework.Context<IInputs>, notifyOutputChanged: () => void, state: ComponentFramework.Dictionary, container: HTMLDivElement): void {
+        //#region - control initialization code 
+        this.context = context;
+        this.notifyOutPutChanged = notifyOutputChanged;
+        this.state = state;
+        this.container = container;
+        //#endregion 
+
+        // Get the root URL of the CE instance
+        const ceInstanceUrl = (context as any).page.getClientUrl();
+
+        // Initialize ApiHelper with the dynamic URL
+        this.apiHelper = new ApiHelper(ceInstanceUrl);
+
+        this.loadData();
+        this.loadForm();
     }
-    /*
-     * Used on load event to get the manifest data values. 
-     */
+
+    // Load manifest data values
     private loadData(): void {
         this.showLeft = this.context.parameters.LeftContent.raw;
-        this.editMode = this.context.parameters.EditMode.raw; 
-        this.separator = this.context.parameters.Separator.raw || ","; 
-        this.contentSeparatorValue = this.context.parameters.LookupContentSeparatorValue.raw || "";   
-        this.labeltext = this.context.parameters.LabelValue.raw || "";  
-        this.showLabel = this.context.parameters.LabelDisplay.raw || false;       
+        this.editMode = this.context.parameters.EditMode.raw;
+        this.separator = this.context.parameters.Separator.raw || ",";
+        this.contentSeparatorValue = this.context.parameters.LookupContentSeparatorValue.raw || "";
+        this.labeltext = this.context.parameters.LabelValue.raw || "";
+        this.showLabel = this.context.parameters.LabelDisplay.raw || false;
     }
-    /*
-     * Used on load event to get the html control value and set the input html to the string. 
-     */
+
+    // Load HTML control values and set input HTML to the string
     private loadForm(): void {
         this.createContainer();
         this.createLabel();
         this.createInput();
         this.setAutoComplete();
         this.setFormLoadValue();
-        //todo
-        //load fluent UI component - use constructor no.
-        //redener control results - make sub class
-        //create web api call - make helper class
     }
-    /*
-     * Used on load event to get the html control value and set the input html to the string. 
-     */
+
     private createContainer(): void {
         this.subcontainer = this.getElement("div", "mycontainer", "mycontainer") as HTMLDivElement;
         this.container.appendChild(this.subcontainer);
     }
-    /*
-     * Used on load event to create the input control and append it to the Container. 
-     */
+
     private createLabel(): void {
         try {
             this.label = this.getElement("label", "label", "mylabel") as HTMLLabelElement;
             let message = this.showLeft ? this.labeltext.split(this.separator)[0] : this.labeltext.split(this.separator)[1];
             this.label.innerText = "(" + message.trim() + ")";
-            if(this.showLabel === true)
+            if (this.showLabel) {
                 this.container.appendChild(this.label);
-        } catch (error){
+            }
+        } catch (error) {
             alert(error);
         }
     }
-    /*
-     * Used on load event to create the input control and append it to the Container. 
-     */
+
     private createInput(): void {
         this.input = this.getElement("input", "Input", "myinput") as HTMLInputElement;
         this.input.disabled = !this.editMode;
-        //this.input.addEventListener("keyup", this.inputChange);                
         this.container.appendChild(this.input);
     }
+
+    // Set up autocomplete
     private setAutoComplete(): void {
         let _searchlength = this.searchlength;
-        let response = this.apiHelper.getLookupValues(this.entity, this.fieldname);
         $(this.input).autocomplete({
-            source: function(request: {term: string}, response: (results: string[]) => void) {
+            source: (request: { term: string }, response: (results: string[]) => void) => {
                 if (request.term.length < _searchlength) return;
-                //alert('You enetered: ' + request.term);
-                
 
-                let data = [request.term]; // Replace with your data 
-                response($.ui.autocomplete.filter(data, request.term));
+                this.apiHelper.fetchRecords(request.term).then(data => {
+                    let parsedRecords = this.parseRecords(data);
+                    this.records = parsedRecords; // Store records
+                    this.updateAutocomplete(parsedRecords, request.term, response);
+                });
             },
-            select: function(event, ui) {
-                alert('Here!');
-                console.log("You selected: " + ui.item.value);
+            select: (event: Event, ui: { item: { value: string } }) => {
+                this.setValue(ui.item.value);
             }
-        });
-
+        } as AutocompleteOptions);
     }
+
+    // Parse records
+    private parseRecords(records: { name: string }[]): { left: string, right: string }[] {
+        return records.map(record => {
+            const [left, right] = record.name.split(this.separator);
+            return { left, right };
+        });
+    }
+
+    // Update autocomplete with fetched records
+    private updateAutocomplete(records: { left: string, right: string }[], term: string, response: (results: string[]) => void): void {
+        const displayRecords = this.showLeft ? records.map(r => r.left) : records.map(r => r.right);
+        const filteredRecords = $.ui.autocomplete.filter(displayRecords, term);
+        response(filteredRecords);
+    }
+
+    // Set the selected value to the lookup field
+    private setValue(selectedValue: string): void {
+        const foundRecord = this.records.find(record =>
+            this.showLeft ? record.left === selectedValue : record.right === selectedValue
+        );
+        if (foundRecord) {
+            this.contentSeparatorValue = `${foundRecord.left}${this.separator}${foundRecord.right}`;
+            this.notifyOutPutChanged();
+        }
+    }
+
     private getElement(type: string, id: string, className: string): HTMLElement {
         let obj = document.createElement(type);
         obj.id = id;
         obj.className = className;
         return obj;
     }
-    /**
-     * Sets the Control value to the input for the Content Separator.     
-     */
-    private setFormLoadValue(): void {        
+
+    // Set the control value to the input for the content separator
+    private setFormLoadValue(): void {
         try {
-            let content = this.contentSeparatorValue.split(this.separator);   
-            if (content.length < 2) return;     
+            let content = this.contentSeparatorValue.split(this.separator);
+            if (content.length < 2) return;
             this.input.value = this.showLeft ? content[0].trim() : content[1].trim();
         } catch (error) {
             alert("Please contact support, the following error occurred: ERROR:" + error);
@@ -180,8 +188,7 @@ export class LookupContentSeparator implements ComponentFramework.StandardContro
      * Called when any value in the property bag has changed. This includes field values, data-sets, global values such as container height and width, offline status, control metadata values such as label, visible, etc.
      * @param context The entire property bag available to control via Context Object; It contains values as set up by the customizer mapped to names defined in the manifest, as well as utility functions
      */
-    public updateView(context: ComponentFramework.Context<IInputs>): void
-    {
+    public updateView(context: ComponentFramework.Context<IInputs>): void {
         // Add code to update control view
     }
 
@@ -189,10 +196,9 @@ export class LookupContentSeparator implements ComponentFramework.StandardContro
      * It is called by the framework prior to a control receiving new data.
      * @returns an object based on nomenclature defined in manifest, expecting object[s] for property marked as "bound" or "output"
      */
-    public getOutputs(): IOutputs
-    {
-         return {
-            LookupContentSeparatorValue : this.contentSeparatorValue
+    public getOutputs(): IOutputs {
+        return {
+            LookupContentSeparatorValue: this.contentSeparatorValue
         };
     }
 
@@ -200,8 +206,7 @@ export class LookupContentSeparator implements ComponentFramework.StandardContro
      * Called when the control is to be removed from the DOM tree. Controls should use this call for cleanup.
      * i.e. cancelling any pending remote calls, removing listeners, etc.
      */
-    public destroy(): void
-    {
+    public destroy(): void {
         // Add code to cleanup control if necessary
     }
 }
