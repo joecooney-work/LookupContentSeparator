@@ -121,23 +121,23 @@ export class LookupContentSeparator implements ComponentFramework.StandardContro
         this.container.appendChild(this.input);
     }
 
-    // Set up autocomplete
     private setAutoComplete(): void {
         let _searchlength = this.searchlength;
         $(this.input).autocomplete({
             source: (request: { term: string }, response: (results: string[]) => void) => {
                 if (request.term.length < _searchlength) return;
-
                 this.apiHelper.fetchRecords(request.term).then(data => {
                     let parsedRecords = this.parseRecords(data);
                     this.records = parsedRecords; // Store records
                     this.updateAutocomplete(parsedRecords, request.term, response);
                 });
             },
-            select: (event: Event, ui: { item: { value: string } }) => {
-                this.setValue(ui.item.value);
+            select: (event: Event, ui: JQueryUI.AutocompleteUIParams) => {
+                if (ui.item) {
+                    this.setValue(ui.item.value);
+                }
             }
-        } as AutocompleteOptions);
+        } as JQueryUI.AutocompleteOptions);
     }
 
     // Parse records

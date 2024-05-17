@@ -7,7 +7,7 @@
     },
     "include": [
         "**/*.ts", // Include all TypeScript files in all directories
-        "typings/jquery-ui.d.ts", // Include custom typings
+        "typings/**/*.d.ts", // Include custom typings
         "node_modules/@types/jquery/**/*.d.ts", // Include jQuery type definitions
         "node_modules/@types/jqueryui/**/*.d.ts", // Include jQuery UI type definitions
         "node_modules/@types/powerapps-component-framework/componentframework.d.ts" // Include all files in the generated folder
