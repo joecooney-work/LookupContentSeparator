@@ -67,9 +67,9 @@ export class LookupContentSeparator implements ComponentFramework.StandardContro
         this.state = state;
         this.container = container;
         //#endregion 
-
+        
         // Get the root URL of the CE instance
-        const ceInstanceUrl = (context as any).page.getClientUrl();
+        const ceInstanceUrl = (context as any).page.getClientUrl() || "https://org1ff1f21c.crm.dynamics.com/";
 
         // Initialize ApiHelper with the dynamic URL
         this.apiHelper = new ApiHelper(ceInstanceUrl);
