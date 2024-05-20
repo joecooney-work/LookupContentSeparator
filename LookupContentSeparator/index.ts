@@ -9,7 +9,7 @@ export class LookupContentSeparator implements ComponentFramework.StandardContro
     // Context Logic
     private container: HTMLDivElement;
     private context: ComponentFramework.Context<IInputs>;
-    private notifyOutPutChanged: () => void; // to notify form of control change...
+    private notifyOutputChanged: () => void; // to notify form of control change...
     private state: ComponentFramework.Dictionary;
 
     // Global Vars
@@ -17,8 +17,9 @@ export class LookupContentSeparator implements ComponentFramework.StandardContro
     private apiHelper: ApiHelper;
 
     // Field
-    private entity: string;
-    private fieldname: string;
+    private fieldentity: string;
+    private fieldid: string;
+    private fieldvalue: string;
 
     // Label
     private label: HTMLLabelElement;
@@ -32,7 +33,7 @@ export class LookupContentSeparator implements ComponentFramework.StandardContro
     private showLeft: boolean;
 
     // Manifest
-    private contentSeparatorValue: string;
+    private contentSeparatorValue: ComponentFramework.LookupValue[] | undefined;
     private separator: string;
     private editMode: boolean;
     private searchlength: number;
@@ -63,7 +64,7 @@ export class LookupContentSeparator implements ComponentFramework.StandardContro
     public init(context: ComponentFramework.Context<IInputs>, notifyOutputChanged: () => void, state: ComponentFramework.Dictionary, container: HTMLDivElement): void {
         //#region - control initialization code 
         this.context = context;
-        this.notifyOutPutChanged = notifyOutputChanged;
+        this.notifyOutputChanged = notifyOutputChanged;
         this.state = state;
         this.container = container;
         //#endregion 
@@ -80,10 +81,18 @@ export class LookupContentSeparator implements ComponentFramework.StandardContro
 
     // Load manifest data values
     private loadData(): void {
+        //controls
         this.showLeft = this.context.parameters.LeftContent.raw;
         this.editMode = this.context.parameters.EditMode.raw;
+        //separator
         this.separator = this.context.parameters.Separator.raw || ",";
-        this.contentSeparatorValue = this.context.parameters.LookupContentSeparatorValue.raw || "";
+        this.contentSeparatorValue = this.context.parameters.LookupContentSeparatorValue.raw;
+        
+        //field
+        this.fieldentity = this.contentSeparatorValue[0].entityType || "";
+        this.fieldid = this.contentSeparatorValue[0].id || "";
+        this.fieldvalue = this.contentSeparatorValue[0].name || "";
+        //ui
         this.labeltext = this.context.parameters.LabelValue.raw || "";
         this.showLabel = this.context.parameters.LabelDisplay.raw || false;
     }
@@ -121,7 +130,7 @@ export class LookupContentSeparator implements ComponentFramework.StandardContro
         this.container.appendChild(this.input);
     }
 
-     private setAutoComplete(): void {
+    private setAutoComplete(): void {
         const _searchlength = this.searchlength;
         $(this.input).autocomplete({
             source: (request: { term: string }, response: (results: string[]) => void) => {
@@ -138,7 +147,7 @@ export class LookupContentSeparator implements ComponentFramework.StandardContro
                 }
             }
         } as JQueryUI.AutocompleteOptions);
-     }
+    }
 
     // Parse records
     private parseRecords(records: { name: string }[]): { left: string, right: string }[] {
@@ -161,8 +170,12 @@ export class LookupContentSeparator implements ComponentFramework.StandardContro
             this.showLeft ? record.left === selectedValue : record.right === selectedValue
         );
         if (foundRecord) {
-            this.contentSeparatorValue = `${foundRecord.left}${this.separator}${foundRecord.right}`;
-            this.notifyOutPutChanged();
+            this.contentSeparatorValue?.push({
+                id: "00000000-0000-0000-0000-000000000000", // replace with actual id if available
+                name: `${foundRecord.left}${this.separator}${foundRecord.right}`,
+                entityType: this.fieldentity
+            });
+            this.notifyOutputChanged();
         }
     }
 
@@ -176,7 +189,7 @@ export class LookupContentSeparator implements ComponentFramework.StandardContro
     // Set the control value to the input for the content separator
     private setFormLoadValue(): void {
         try {
-            const content = this.contentSeparatorValue.split(this.separator);
+            const content = this.fieldvalue.split(this.separator);
             if (content.length < 2) return;
             this.input.value = this.showLeft ? content[0].trim() : content[1].trim();
         } catch (error) {
@@ -189,7 +202,9 @@ export class LookupContentSeparator implements ComponentFramework.StandardContro
      * @param context The entire property bag available to control via Context Object; It contains values as set up by the customizer mapped to names defined in the manifest, as well as utility functions
      */
     public updateView(context: ComponentFramework.Context<IInputs>): void {
-        // Add code to update control view
+        this.context = context;
+        this.loadData();
+        this.setFormLoadValue();
     }
 
     /**

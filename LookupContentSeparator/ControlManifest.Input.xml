@@ -1,6 +1,12 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <manifest>
-  <control namespace="LookupContentSeparator" constructor="LookupContentSeparator" version="0.0.1" display-name-key="LookupContentSeparator" description-key="LookupContentSeparator description" control-type="standard" >
+  <control 
+  namespace="LookupContentSeparator" 
+  constructor="LookupContentSeparator" 
+  version="1.0.1.1" 
+  display-name-key="LookupContentSeparator" 
+  description-key="LookupContentSeparator description" 
+  control-type="standard" >
     <!--external-service-usage node declares whether this 3rd party PCF control is using external service or not, if yes, this control will be considered as premium and please also add the external domain it is using.
     If it is not using any external service, please set the enabled="false" and DO NOT add any domain below. The "enabled" will be false by default.
     Example1:
@@ -21,39 +27,45 @@
      <property name="LookupContentSeparatorValue" 
     display-name-key="LookupContentSeparatorValue_Display_Key" 
     description-key="The control the ContentSeparator is applied to is displayed and updated here." 
-    of-type="SingleLine.Text" 
+    of-type="Lookup.Simple" 
     usage="bound" 
     required="true"/>
+    <!-- bound Property end!!! -->
     <property name="LabelValue" 
     display-name-key="LabelValue_Display_Key" 
     description-key="This input field serves as a label and will provide the content des. for ex. - English | French" 
     of-type="SingleLine.Text" 
     usage="input" 
     required="true"/>
+    <!-- Property end!!! -->    
     <property name="LabelDisplay" 
     display-name-key="LabelDisplay_Display_Key" 
     description-key="True means the label will display the parsed label value above. ex. - (English)" 
     of-type="TwoOptions" 
     usage="input" 
     required="false"/>
+    <!-- Property end!!! -->    
     <property name="EditMode" 
     display-name-key="EditMode_Display_Key" 
     description-key="True means the field can be updated, false will display the required field without the ability to change the value. (Defaults to true)" 
     of-type="TwoOptions" 
     usage="input" 
     required="false"/>
+    <!-- Property end!!! -->    
     <property name="LeftContent" 
     display-name-key="LeftContent_Display_Key" 
     description-key="True means the field will show left content, false will display the right content. (Defaults to true)" 
     of-type="TwoOptions" 
     usage="input" 
     required="false"/>
+    <!-- Property end!!! -->    
     <property name="Separator" 
     display-name-key="Separator_Display_Key" 
     description-key="The value entered will be used to seperate the string of text stored in the field, left blank the value is (;). (Ex. Your Text Here , Your other Text Here)" 
     of-type="SingleLine.Text" 
     usage="input" 
     required="false"/>
+    <!-- Property end!!! -->    
     <!--
       Property node's of-type attribute can be of-type-group attribute.
       Example:
